@@ -699,17 +699,19 @@
                 const nearbyData = await nearbyResponse.json();
                 console.log('Nearby response:', nearbyData);
 
-                // Process facilities
-                allFacilities = nearbyData.map(facility => {
-                    const facLat = facility.wgsLat || 0;
-                    const facLng = facility.wgsLng || 0;
-                    const distance = getDistance(lat, lng, facLat, facLng);
+                // Process facilities - use HK80 coordinates for distance
+                const userHk80X = nearbyData.hk80X || 0;
+                const userHk80Y = nearbyData.hk80Y || 0;
+
+                allFacilities = nearbyData.facilities.map(facility => {
+                    const hk80X = facility.x || 0;
+                    const hk80Y = facility.y || 0;
+                    // Simple distance calculation using HK80 coordinates
+                    const distance = Math.sqrt(Math.pow(hk80X - userHk80X, 2) + Math.pow(hk80Y - userHk80Y, 2));
                     const category = categorizeFacility(facility.name);
 
                     return {
                         ...facility,
-                        facLat,
-                        facLng,
                         distance,
                         category
                     };
@@ -822,7 +824,8 @@
                 const address = facility.address || '';
                 const distance = facility.distance;
                 const category = CATEGORIES[facility.category] || CATEGORIES.other;
-                const mapsUrl = `https://www.google.com/maps?q=${facility.facLat},${facility.facLng}`;
+                // Use HK80 coordinates for Google Maps (approximate conversion)
+                const mapsUrl = `https://www.google.com/maps?q=${facility.y},${facility.x}`;
 
                 // Get additional info
                 let additionalInfoHtml = '';

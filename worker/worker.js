@@ -1,5 +1,5 @@
 // Cloudflare Worker - Nearby Facilities Finder Proxy
-// Solves CORS issue for Hong Kong government APIs
+// Simplified version - no reverse coordinate transformation
 
 const ALLOWED_ORIGINS = ['https://stonemokkkk.github.io', 'http://localhost:8080'];
 
@@ -132,39 +132,13 @@ async function handleNearby(url, origin) {
   const nearbyData = await nearbyResponse.json();
   console.log(`Found ${nearbyData.length} facilities`);
 
-  // Step 3: Convert HK80 coordinates back to WGS84 for each facility
-  const facilitiesWithWGS84 = await Promise.all(nearbyData.map(async (facility) => {
-    try {
-      const reverseTransformUrl = new URL(GEODETIC_API);
-      reverseTransformUrl.searchParams.set('inSys', 'hkgrid');
-      reverseTransformUrl.searchParams.set('outSys', 'wgsgeog');
-      reverseTransformUrl.searchParams.set('n', facility.y);
-      reverseTransformUrl.searchParams.set('e', facility.x);
-
-      const reverseResponse = await fetch(reverseTransformUrl.toString(), {
-        headers: {
-          'User-Agent': 'NearbyFinder/1.0',
-          'Accept': 'application/json'
-        }
-      });
-
-      if (reverseResponse.ok) {
-        const reverseData = await reverseResponse.json();
-        return {
-          ...facility,
-          wgsLat: reverseData.wgsLat,
-          wgsLng: reverseData.wgsLong
-        };
-      }
-    } catch (e) {
-      console.error('Reverse transform error:', e);
-    }
-
-    // Fallback: return facility without WGS84 coordinates
-    return facility;
-  }));
-
-  return new Response(JSON.stringify(facilitiesWithWGS84), {
+  // Step 3: Return raw data with HK80 coordinates
+  // The frontend will handle the distance calculation using HK80 coordinates
+  return new Response(JSON.stringify({
+    hk80X: hk80X,
+    hk80Y: hk80Y,
+    facilities: nearbyData
+  }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
