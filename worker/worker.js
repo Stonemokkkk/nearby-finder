@@ -1,7 +1,7 @@
 // Cloudflare Worker - Nearby Facilities Finder Proxy
 // Solves CORS issue for Hong Kong government APIs
 
-const ALLOWED_ORIGINS = ['*']; // TODO: Replace with GitHub Pages URL after deployment
+const ALLOWED_ORIGINS = ['https://stonemokkkk.github.io'];
 
 // Cache duration in seconds
 const CACHE_DURATION = 60;
