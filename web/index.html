@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>附近設施 Finder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .status.error {
+            color: #e74c3c;
+        }
+
+        .status.success {
+            color: #27ae60;
+        }
+
+        .results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .result-item p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .result-item .distance {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .result-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .result-item a:hover {
+            text-decoration: underline;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .coordinates {
+            background: #f0f4ff;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #667eea;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏛️ 附近設施 Finder</h1>
+
+        <!-- Location Input Card -->
+        <div class="card">
+            <h2>📍 輸入位置</h2>
+
+            <div class="input-group">
+                <label for="lat">緯度 (Latitude)</label>
+                <input type="number" id="lat" step="any" placeholder="例如: 22.2818" />
+            </div>
+
+            <div class="input-group">
+                <label for="lng">經度 (Longitude)</label>
+                <input type="number" id="lng" step="any" placeholder="例如: 114.1588" />
+            </div>
+
+            <button class="btn btn-primary" id="gpsBtn">
+                📱 使用 GPS 定位
+            </button>
+
+            <button class="btn btn-secondary" id="searchBtn">
+                🔍 搜尋附近設施
+            </button>
+
+            <div class="status" id="status"></div>
+
+            <div class="coordinates" id="coordinates" style="display: none;">
+                當前位置: <span id="coordText"></span>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在搜尋附近設施...</p>
+        </div>
+
+        <!-- Results Card -->
+        <div class="card results" id="resultsCard" style="display: none;">
+            <h2>🎯 附近設施</h2>
+            <div id="resultsList"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Configuration ====================
+        const PROXY_BASE = 'https://nearby-finder-proxy.stonemok-business.workers.dev';
+
+        // ==================== DOM Elements ====================
+        const latInput = document.getElementById('lat');
+        const lngInput = document.getElementById('lng');
+        const gpsBtn = document.getElementById('gpsBtn');
+        const searchBtn = document.getElementById('searchBtn');
+        const statusDiv = document.getElementById('status');
+        const coordinatesDiv = document.getElementById('coordinates');
+        const coordText = document.getElementById('coordText');
+        const loadingDiv = document.getElementById('loading');
+        const resultsCard = document.getElementById('resultsCard');
+        const resultsList = document.getElementById('resultsList');
+
+        // ==================== State ====================
+        let currentLat = null;
+        let currentLng = null;
+
+        // ==================== GPS Button ====================
+        gpsBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                showStatus('你嘅瀏覽器唔支援 GPS 定位', 'error');
+                return;
+            }
+
+            showStatus('正在獲取位置...', '');
+            gpsBtn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    currentLat = position.coords.latitude;
+                    currentLng = position.coords.longitude;
+
+                    latInput.value = currentLat.toFixed(6);
+                    lngInput.value = currentLng.toFixed(6);
+
+                    coordText.textContent = `${currentLat.toFixed(6)}, ${currentLng.toFixed(6)}`;
+                    coordinatesDiv.style.display = 'block';
+
+                    showStatus('位置獲取成功！', 'success');
+                    gpsBtn.disabled = false;
+                },
+                (error) => {
+                    let msg = '無法獲取位置';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            msg = '用戶拒絕了定位請求';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            msg = '位置信息不可用';
+                            break;
+                        case error.TIMEOUT:
+                            msg = '定位請求超時';
+                            break;
+                    }
+                    showStatus(msg, 'error');
+                    gpsBtn.disabled = false;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        });
+
+        // ==================== Search Button ====================
+        searchBtn.addEventListener('click', async () => {
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+
+            if (isNaN(lat) || isNaN(lng)) {
+                showStatus('請輸入有效嘅緯度同經度', 'error');
+                return;
+            }
+
+            if (lat < 22.15 || lat > 22.56 || lng < 113.82 || lng > 114.44) {
+                showStatus('座標似乎唔喺香港範圍內', 'error');
+                return;
+            }
+
+            currentLat = lat;
+            currentLng = lng;
+
+            coordText.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            coordinatesDiv.style.display = 'block';
+
+            await searchNearby(lat, lng);
+        });
+
+        // ==================== Search Nearby ====================
+        async function searchNearby(lat, lng) {
+            showLoading(true);
+            showStatus('', '');
+
+            try {
+                // Step 1: Transform coordinates (WGS84 → HK80)
+                const transformUrl = `${PROXY_BASE}/transform?inSys=wgsgeog&outSys=hkgrid&lat=${lat}&long=${lng}`;
+                const transformResponse = await fetch(transformUrl);
+
+                if (!transformResponse.ok) {
+                    throw new Error(`座標轉換失敗: ${transformResponse.status}`);
+                }
+
+                const transformData = await transformResponse.json();
+                console.log('Transform response:', transformData);
+
+                // Step 2: Search nearby facilities
+                const nearbyUrl = `${PROXY_BASE}/nearby?lat=${lat}&long=${lng}&r=1000`;
+                const nearbyResponse = await fetch(nearbyUrl);
+
+                if (!nearbyResponse.ok) {
+                    throw new Error(`搜尋失敗: ${nearbyResponse.status}`);
+                }
+
+                const nearbyData = await nearbyResponse.json();
+                console.log('Nearby response:', nearbyData);
+
+                // Step 3: Render results
+                renderResults(nearbyData, lat, lng);
+
+            } catch (error) {
+                console.error('Search error:', error);
+                showStatus(`搜尋失敗: ${error.message}`, 'error');
+                resultsCard.style.display = 'none';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ==================== Render Results ====================
+        function renderResults(data, userLat, userLng) {
+            resultsList.innerHTML = '';
+
+            // Defensive parsing - gov API field names vary
+            let facilities = [];
+
+            if (Array.isArray(data)) {
+                facilities = data;
+            } else if (data && data.features) {
+                facilities = data.features;
+            } else if (data && data.results) {
+                facilities = data.results;
+            } else if (data && data.data) {
+                facilities = data.data;
+            }
+
+            if (facilities.length === 0) {
+                resultsList.innerHTML = '<div class="no-results">附近冇搵到設施</div>';
+                resultsCard.style.display = 'block';
+                return;
+            }
+
+            // Sort by distance
+            facilities.sort((a, b) => {
+                const distA = getDistance(userLat, userLng, getLat(a), getLng(a));
+                const distB = getDistance(userLat, userLng, getLat(b), getLng(b));
+                return distA - distB;
+            });
+
+            // Render each facility
+            facilities.forEach(facility => {
+                const name = getName(facility);
+                const address = getAddress(facility);
+                const facLat = getLat(facility);
+                const facLng = getLng(facility);
+                const distance = getDistance(userLat, userLng, facLat, facLng);
+
+                const mapsUrl = `https://www.google.com/maps?q=${facLat},${facLng}`;
+
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.innerHTML = `
+                    <h3>${escapeHtml(name)}</h3>
+                    ${address ? `<p>${escapeHtml(address)}</p>` : ''}
+                    <p class="distance">距離: ${distance.toFixed(0)} 米</p>
+                    <a href="${mapsUrl}" target="_blank" rel="noopener">📍 在地圖中查看</a>
+                `;
+                resultsList.appendChild(item);
+            });
+
+            resultsCard.style.display = 'block';
+            showStatus(`搵到 ${facilities.length} 個設施`, 'success');
+        }
+
+        // ==================== Helper Functions ====================
+        // Defensive field extraction
+        function getName(obj) {
+            return obj.name || obj.Name || obj.NAME || obj.facility_name || obj.FacilityName || '未知設施';
+        }
+
+        function getAddress(obj) {
+            return obj.address || obj.Address || obj.ADDRESS || obj.location || obj.Location || '';
+        }
+
+        function getLat(obj) {
+            if (obj.lat) return parseFloat(obj.lat);
+            if (obj.latitude) return parseFloat(obj.latitude);
+            if (obj.y) return parseFloat(obj.y);
+            if (obj.geometry && obj.geometry.coordinates) return obj.geometry.coordinates[1];
+            return 0;
+        }
+
+        function getLng(obj) {
+            if (obj.lng) return parseFloat(obj.lng);
+            if (obj.long) return parseFloat(obj.long);
+            if (obj.longitude) return parseFloat(obj.longitude);
+            if (obj.x) return parseFloat(obj.x);
+            if (obj.geometry && obj.geometry.coordinates) return obj.geometry.coordinates[0];
+            return 0;
+        }
+
+        // Haversine formula for distance calculation
+        function getDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371000; // Earth's radius in meters
+            const dLat = toRad(lat2 - lat1);
+            const dLng = toRad(lng2 - lng1);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function toRad(deg) {
+            return deg * (Math.PI / 180);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showStatus(msg, type) {
+            statusDiv.textContent = msg;
+            statusDiv.className = 'status' + (type ? ' ' + type : '');
+        }
+
+        function showLoading(show) {
+            loadingDiv.className = show ? 'loading show' : 'loading';
+            searchBtn.disabled = show;
+        }
+    </script>
+</body>
+</html>
