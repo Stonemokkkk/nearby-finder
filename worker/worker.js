@@ -3,8 +3,9 @@
 
 const ALLOWED_ORIGINS = ['https://stonemokkkk.github.io', 'http://localhost:8080'];
 
-// Government API endpoint
-const GOV_API = 'https://www.map.gov.hk/gs/api/v1.0.0/searchNearby';
+// Government API endpoints
+const GEODETIC_API = 'https://www.geodetic.gov.hk/transform/v2/';
+const MAP_API = 'https://www.map.gov.hk/gs/api/v1.0.0/searchNearby';
 
 // Cache duration in seconds
 const CACHE_DURATION = 60;
@@ -67,13 +68,13 @@ function getCorsHeaders(origin) {
 
 async function handleNearby(url, origin) {
   const params = url.searchParams;
-  const x = params.get('x'); // HK80 Easting
-  const y = params.get('y'); // HK80 Northing
+  const lat = params.get('lat'); // WGS84 latitude
+  const lng = params.get('lng'); // WGS84 longitude
   const lang = params.get('lang') || 'zh';
 
-  if (!x || !y) {
+  if (!lat || !lng) {
     return new Response(JSON.stringify({
-      error: 'Missing required parameters: x (HK80 Easting), y (HK80 Northing)'
+      error: 'Missing required parameters: lat (WGS84), lng (WGS84)'
     }), {
       status: 400,
       headers: {
@@ -83,28 +84,88 @@ async function handleNearby(url, origin) {
     });
   }
 
-  // Build upstream URL
-  const upstreamUrl = new URL(GOV_API);
-  upstreamUrl.searchParams.set('x', x);
-  upstreamUrl.searchParams.set('y', y);
-  upstreamUrl.searchParams.set('lang', lang);
+  // Step 1: Transform WGS84 to HK80
+  const transformUrl = new URL(GEODETIC_API);
+  transformUrl.searchParams.set('inSys', 'wgsgeog');
+  transformUrl.searchParams.set('outSys', 'hkgrid');
+  transformUrl.searchParams.set('lat', lat);
+  transformUrl.searchParams.set('long', lng);
 
-  console.log(`Fetching from: ${upstreamUrl.toString()}`);
+  console.log(`Transforming: ${lat}, ${lng}`);
 
-  // Fetch from government API
-  const response = await fetch(upstreamUrl.toString(), {
+  const transformResponse = await fetch(transformUrl.toString(), {
     headers: {
       'User-Agent': 'NearbyFinder/1.0',
       'Accept': 'application/json'
     }
   });
 
-  const data = await response.text();
+  if (!transformResponse.ok) {
+    throw new Error(`Coordinate transformation failed: ${transformResponse.status}`);
+  }
 
-  console.log(`Response status: ${response.status}`);
+  const transformData = await transformResponse.json();
+  console.log('Transform result:', transformData);
 
-  return new Response(data, {
-    status: response.status,
+  const hk80X = transformData.hkE; // Easting
+  const hk80Y = transformData.hkN; // Northing
+
+  // Step 2: Search nearby facilities
+  const nearbyUrl = new URL(MAP_API);
+  nearbyUrl.searchParams.set('x', hk80X);
+  nearbyUrl.searchParams.set('y', hk80Y);
+  nearbyUrl.searchParams.set('lang', lang);
+
+  console.log(`Searching nearby: x=${hk80X}, y=${hk80Y}`);
+
+  const nearbyResponse = await fetch(nearbyUrl.toString(), {
+    headers: {
+      'User-Agent': 'NearbyFinder/1.0',
+      'Accept': 'application/json'
+    }
+  });
+
+  if (!nearbyResponse.ok) {
+    throw new Error(`Search nearby failed: ${nearbyResponse.status}`);
+  }
+
+  const nearbyData = await nearbyResponse.json();
+  console.log(`Found ${nearbyData.length} facilities`);
+
+  // Step 3: Convert HK80 coordinates back to WGS84 for each facility
+  const facilitiesWithWGS84 = await Promise.all(nearbyData.map(async (facility) => {
+    try {
+      const reverseTransformUrl = new URL(GEODETIC_API);
+      reverseTransformUrl.searchParams.set('inSys', 'hkgrid');
+      reverseTransformUrl.searchParams.set('outSys', 'wgsgeog');
+      reverseTransformUrl.searchParams.set('n', facility.y);
+      reverseTransformUrl.searchParams.set('e', facility.x);
+
+      const reverseResponse = await fetch(reverseTransformUrl.toString(), {
+        headers: {
+          'User-Agent': 'NearbyFinder/1.0',
+          'Accept': 'application/json'
+        }
+      });
+
+      if (reverseResponse.ok) {
+        const reverseData = await reverseResponse.json();
+        return {
+          ...facility,
+          wgsLat: reverseData.wgsLat,
+          wgsLng: reverseData.wgsLong
+        };
+      }
+    } catch (e) {
+      console.error('Reverse transform error:', e);
+    }
+
+    // Fallback: return facility without WGS84 coordinates
+    return facility;
+  }));
+
+  return new Response(JSON.stringify(facilitiesWithWGS84), {
+    status: 200,
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': `public, max-age=${CACHE_DURATION}`,

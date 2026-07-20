@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>附近設施 Finder</title>
-    <!-- proj4js for coordinate transformation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
     <style>
         * {
             margin: 0;
@@ -280,12 +278,6 @@
         // ==================== Configuration ====================
         const PROXY_BASE = 'https://nearby-finder-proxy.stonemok-business.workers.dev';
 
-        // ==================== proj4js Setup ====================
-        // HK80 Grid System (EPSG:2326)
-        proj4.defs('EPSG:2326', '+proj=tmerc +lat_0=22.31213333333334 +lon_0=114.1785555555556 +k=1 +x_0=836694.05 +y_0=819069.8 +ellps=GRS80 +towgs84=-1.0899999999999999,-405.9990000000001,586.999000000001,0,0,0,0 +units=m +no_defs');
-        // WGS84 (EPSG:4326)
-        proj4.defs('EPSG:4326', '+proj=longlat +datum=WGS84 +no_defs');
-
         // ==================== DOM Elements ====================
         const latInput = document.getElementById('lat');
         const lngInput = document.getElementById('lng');
@@ -380,14 +372,9 @@
             showStatus('', '');
 
             try {
-                // Step 1: Transform coordinates (WGS84 → HK80) using proj4js
-                const hk80Coords = proj4('EPSG:4326', 'EPSG:2326', [lng, lat]);
-                const hk80X = hk80Coords[0]; // Easting
-                const hk80Y = hk80Coords[1]; // Northing
-                console.log(`WGS84: ${lat}, ${lng} → HK80: ${hk80X}, ${hk80Y}`);
-
-                // Step 2: Search nearby facilities using HK80 coordinates
-                const nearbyUrl = `${PROXY_BASE}/nearby?x=${hk80X}&y=${hk80Y}&lang=zh`;
+                // Send WGS84 coordinates to Worker
+                // Worker will transform to HK80 and search nearby facilities
+                const nearbyUrl = `${PROXY_BASE}/nearby?lat=${lat}&lng=${lng}&lang=zh`;
                 const nearbyResponse = await fetch(nearbyUrl);
 
                 if (!nearbyResponse.ok) {
@@ -397,7 +384,7 @@
                 const nearbyData = await nearbyResponse.json();
                 console.log('Nearby response:', nearbyData);
 
-                // Step 3: Render results
+                // Render results
                 renderResults(nearbyData, lat, lng);
 
             } catch (error) {
@@ -430,15 +417,11 @@
                 return;
             }
 
-            // Convert HK80 coordinates to WGS84 for each facility
-            const facilitiesWithWGS84 = facilities.map(facility => {
-                const hk80X = parseFloat(facility.x);
-                const hk80Y = parseFloat(facility.y);
-
-                // Convert HK80 to WGS84
-                const wgs84Coords = proj4('EPSG:2326', 'EPSG:4326', [hk80X, hk80Y]);
-                const facLng = wgs84Coords[0]; // longitude
-                const facLat = wgs84Coords[1]; // latitude
+            // Process facilities - Worker already converted HK80 to WGS84
+            const facilitiesProcessed = facilities.map(facility => {
+                // Use WGS84 coordinates from Worker response
+                const facLat = facility.wgsLat || 0;
+                const facLng = facility.wgsLng || 0;
 
                 // Calculate distance
                 const distance = getDistance(userLat, userLng, facLat, facLng);
@@ -452,10 +435,10 @@
             });
 
             // Sort by distance
-            facilitiesWithWGS84.sort((a, b) => a.distance - b.distance);
+            facilitiesProcessed.sort((a, b) => a.distance - b.distance);
 
             // Render each facility
-            facilitiesWithWGS84.forEach(facility => {
+            facilitiesProcessed.forEach(facility => {
                 const name = facility.name || '未知設施';
                 const address = facility.address || '';
                 const distance = facility.distance;
