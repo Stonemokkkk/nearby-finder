@@ -4,7 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>附近設施 Finder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,72 +32,120 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
             min-height: 100vh;
-            padding: 20px;
+            padding: 16px;
+            color: var(--text-primary);
         }
 
         .container {
-            max-width: 600px;
+            max-width: 480px;
             margin: 0 auto;
         }
 
-        h1 {
-            color: white;
+        /* Header */
+        .header {
             text-align: center;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 24px;
         }
 
+        .header h1 {
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        /* Cards */
         .card {
-            background: white;
-            border-radius: 16px;
+            background: var(--card-bg);
+            border-radius: 20px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-lg);
         }
 
-        .card h2 {
-            color: #333;
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .card-header .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .card-header h2 {
             font-size: 18px;
-            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
+        /* Input Groups */
         .input-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .input-group label {
             display: block;
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
         }
 
         .input-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: #f8fafc;
         }
 
         .input-group input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
 
+        .input-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        /* Buttons */
         .btn {
             width: 100%;
-            padding: 14px;
+            padding: 14px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
+            font-family: inherit;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn:active {
@@ -85,102 +153,307 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
         }
 
         .btn-primary:hover {
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
+            background: #f1f5f9;
+            color: var(--text-primary);
             margin-top: 10px;
         }
 
         .btn-secondary:hover {
-            background: #e0e0e0;
+            background: #e2e8f0;
         }
 
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
 
+        /* Status */
         .status {
             text-align: center;
-            color: #666;
             font-size: 14px;
-            margin-top: 10px;
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 500;
         }
 
         .status.error {
-            color: #e74c3c;
+            background: #fef2f2;
+            color: var(--danger);
         }
 
         .status.success {
-            color: #27ae60;
+            background: #f0fdf4;
+            color: var(--success);
         }
 
-        .results {
-            margin-top: 20px;
+        /* Coordinates Display */
+        .coordinates {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .coordinates .pin {
+            font-size: 16px;
+        }
+
+        /* Category Filters */
+        .category-filters {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 0;
+            margin-bottom: 16px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .category-filters::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .category-chip:hover {
+            background: #e2e8f0;
+        }
+
+        .category-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .category-chip .emoji {
+            font-size: 16px;
+        }
+
+        .category-chip .count {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .category-chip.active .count {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Results */
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .results-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .results-count {
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
 
         .result-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .result-item:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow);
+        }
+
+        .result-item-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
             margin-bottom: 10px;
-            border-left: 4px solid #667eea;
+        }
+
+        .result-item .emoji-badge {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .result-item .info {
+            flex: 1;
+            min-width: 0;
         }
 
         .result-item h3 {
-            color: #333;
             font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .result-item p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .result-item .distance {
-            color: #667eea;
             font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            line-height: 1.3;
         }
 
-        .result-item a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
+        .result-item .address {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        .result-item a:hover {
-            text-decoration: underline;
+        .result-item .distance-badge {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .result-item .additional-info {
-            background: #f0f4ff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin: 8px 0;
-            font-size: 13px;
-            color: #555;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
         }
 
+        .result-item .additional-info .info-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .result-item .additional-info .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-item .additional-info .info-label {
+            color: var(--text-secondary);
+        }
+
+        .result-item .additional-info .info-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .result-item .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .result-item .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .result-item .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .result-item .action-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .result-item .action-btn.secondary {
+            background: #f1f5f9;
+            color: var(--text-primary);
+        }
+
+        .result-item .action-btn.secondary:hover {
+            background: #e2e8f0;
+        }
+
+        /* No Results */
         .no-results {
             text-align: center;
-            color: #999;
             padding: 40px 20px;
+            color: var(--text-secondary);
         }
 
+        .no-results .emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .no-results p {
+            font-size: 15px;
+        }
+
+        /* Loading */
         .loading {
             display: none;
             text-align: center;
-            padding: 20px;
+            padding: 30px;
         }
 
         .loading.show {
@@ -188,53 +461,73 @@
         }
 
         .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 12px;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .coordinates {
-            background: #f0f4ff;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
+        .loading p {
+            color: var(--text-secondary);
             font-size: 14px;
-            color: #667eea;
         }
 
-        /* Mobile optimizations */
+        /* Mobile Optimizations */
         @media (max-width: 480px) {
             body {
-                padding: 10px;
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 24px;
             }
 
             .card {
-                padding: 15px;
+                padding: 16px;
+                border-radius: 16px;
             }
 
-            .btn {
-                padding: 12px;
-                font-size: 15px;
+            .result-item {
+                padding: 14px;
+            }
+
+            .result-item .emoji-badge {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏛️ 附近設施 Finder</h1>
+        <!-- Header -->
+        <div class="header">
+            <h1>🏙️ 附近設施 Finder</h1>
+            <p>搵你附近嘅政府設施、停車場、商場</p>
+        </div>
 
         <!-- Location Input Card -->
         <div class="card">
-            <h2>📍 輸入位置</h2>
+            <div class="card-header">
+                <div class="icon">📍</div>
+                <h2>輸入位置</h2>
+            </div>
 
             <div class="input-group">
                 <label for="lat">緯度 (Latitude)</label>
@@ -247,17 +540,18 @@
             </div>
 
             <button class="btn btn-primary" id="gpsBtn">
-                📱 使用 GPS 定位
+                <span>📱</span> 使用 GPS 定位
             </button>
 
             <button class="btn btn-secondary" id="searchBtn">
-                🔍 搜尋附近設施
+                <span>🔍</span> 搜尋附近設施
             </button>
 
             <div class="status" id="status"></div>
 
             <div class="coordinates" id="coordinates" style="display: none;">
-                當前位置: <span id="coordText"></span>
+                <span class="pin">📌</span>
+                <span>當前位置: <span id="coordText"></span></span>
             </div>
         </div>
 
@@ -268,8 +562,16 @@
         </div>
 
         <!-- Results Card -->
-        <div class="card results" id="resultsCard" style="display: none;">
-            <h2>🎯 附近設施</h2>
+        <div class="card" id="resultsCard" style="display: none;">
+            <div class="results-header">
+                <h2>🎯 附近設施</h2>
+                <span class="results-count" id="resultsCount"></span>
+            </div>
+
+            <!-- Category Filters -->
+            <div class="category-filters" id="categoryFilters"></div>
+
+            <!-- Results List -->
             <div id="resultsList"></div>
         </div>
     </div>
@@ -277,6 +579,17 @@
     <script>
         // ==================== Configuration ====================
         const PROXY_BASE = 'https://nearby-finder-proxy.stonemok-business.workers.dev';
+
+        // ==================== Category Definitions ====================
+        const CATEGORIES = {
+            parking: { emoji: '🅿️', label: '停車場', keywords: ['停車場', '泊車', '停車'] },
+            plaza: { emoji: '🏛️', label: '廣場', keywords: ['廣場'] },
+            building: { emoji: '🏢', label: '大廈', keywords: ['大廈', '中心', '大樓'] },
+            street: { emoji: '🛣️', label: '街道', keywords: ['街', '道', '路', '徑'] },
+            mall: { emoji: '🛍️', label: '商場', keywords: ['商場', '購物', '廣場'] },
+            hotel: { emoji: '🏨', label: '酒店', keywords: ['酒店', '旅館', 'hotel'] },
+            other: { emoji: '📍', label: '其他', keywords: [] }
+        };
 
         // ==================== DOM Elements ====================
         const latInput = document.getElementById('lat');
@@ -289,10 +602,14 @@
         const loadingDiv = document.getElementById('loading');
         const resultsCard = document.getElementById('resultsCard');
         const resultsList = document.getElementById('resultsList');
+        const resultsCount = document.getElementById('resultsCount');
+        const categoryFilters = document.getElementById('categoryFilters');
 
         // ==================== State ====================
         let currentLat = null;
         let currentLng = null;
+        let allFacilities = [];
+        let activeCategory = 'all';
 
         // ==================== GPS Button ====================
         gpsBtn.addEventListener('click', () => {
@@ -313,7 +630,7 @@
                     lngInput.value = currentLng.toFixed(6);
 
                     coordText.textContent = `${currentLat.toFixed(6)}, ${currentLng.toFixed(6)}`;
-                    coordinatesDiv.style.display = 'block';
+                    coordinatesDiv.style.display = 'flex';
 
                     showStatus('位置獲取成功！', 'success');
                     gpsBtn.disabled = false;
@@ -361,7 +678,7 @@
             currentLng = lng;
 
             coordText.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            coordinatesDiv.style.display = 'block';
+            coordinatesDiv.style.display = 'flex';
 
             await searchNearby(lat, lng);
         });
@@ -372,8 +689,6 @@
             showStatus('', '');
 
             try {
-                // Send WGS84 coordinates to Worker
-                // Worker will transform to HK80 and search nearby facilities
                 const nearbyUrl = `${PROXY_BASE}/nearby?lat=${lat}&lng=${lng}&lang=zh`;
                 const nearbyResponse = await fetch(nearbyUrl);
 
@@ -384,8 +699,30 @@
                 const nearbyData = await nearbyResponse.json();
                 console.log('Nearby response:', nearbyData);
 
+                // Process facilities
+                allFacilities = nearbyData.map(facility => {
+                    const facLat = facility.wgsLat || 0;
+                    const facLng = facility.wgsLng || 0;
+                    const distance = getDistance(lat, lng, facLat, facLng);
+                    const category = categorizeFacility(facility.name);
+
+                    return {
+                        ...facility,
+                        facLat,
+                        facLng,
+                        distance,
+                        category
+                    };
+                });
+
+                // Sort by distance
+                allFacilities.sort((a, b) => a.distance - b.distance);
+
+                // Render category filters
+                renderCategoryFilters();
+
                 // Render results
-                renderResults(nearbyData, lat, lng);
+                renderResults();
 
             } catch (error) {
                 console.error('Search error:', error);
@@ -396,78 +733,135 @@
             }
         }
 
-        // ==================== Render Results ====================
-        function renderResults(data, userLat, userLng) {
-            resultsList.innerHTML = '';
+        // ==================== Categorize Facility ====================
+        function categorizeFacility(name) {
+            if (!name) return 'other';
 
-            // Parse API response - it's an array of facilities
-            let facilities = [];
+            const lowerName = name.toLowerCase();
 
-            if (Array.isArray(data)) {
-                facilities = data;
-            } else if (data && data.features) {
-                facilities = data.features;
-            } else if (data && data.results) {
-                facilities = data.results;
+            for (const [key, category] of Object.entries(CATEGORIES)) {
+                if (key === 'other') continue;
+                if (category.keywords.some(keyword => lowerName.includes(keyword))) {
+                    return key;
+                }
             }
 
-            if (facilities.length === 0) {
-                resultsList.innerHTML = '<div class="no-results">附近冇搵到設施</div>';
-                resultsCard.style.display = 'block';
+            return 'other';
+        }
+
+        // ==================== Render Category Filters ====================
+        function renderCategoryFilters() {
+            // Count facilities per category
+            const counts = { all: allFacilities.length };
+            for (const key of Object.keys(CATEGORIES)) {
+                counts[key] = 0;
+            }
+
+            allFacilities.forEach(f => {
+                counts[f.category]++;
+            });
+
+            // Build HTML
+            let html = `
+                <div class="category-chip ${activeCategory === 'all' ? 'active' : ''}" data-category="all">
+                    <span class="emoji">📍</span>
+                    <span>全部</span>
+                    <span class="count">${counts.all}</span>
+                </div>
+            `;
+
+            for (const [key, category] of Object.entries(CATEGORIES)) {
+                if (counts[key] === 0) continue;
+                html += `
+                    <div class="category-chip ${activeCategory === key ? 'active' : ''}" data-category="${key}">
+                        <span class="emoji">${category.emoji}</span>
+                        <span>${category.label}</span>
+                        <span class="count">${counts[key]}</span>
+                    </div>
+                `;
+            }
+
+            categoryFilters.innerHTML = html;
+
+            // Add click handlers
+            categoryFilters.querySelectorAll('.category-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    activeCategory = chip.dataset.category;
+                    categoryFilters.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    renderResults();
+                });
+            });
+        }
+
+        // ==================== Render Results ====================
+        function renderResults() {
+            resultsList.innerHTML = '';
+
+            // Filter by category
+            const filtered = activeCategory === 'all'
+                ? allFacilities
+                : allFacilities.filter(f => f.category === activeCategory);
+
+            if (filtered.length === 0) {
+                resultsList.innerHTML = `
+                    <div class="no-results">
+                        <div class="emoji">🔍</div>
+                        <p>呢個分類冇搵到設施</p>
+                    </div>
+                `;
+                resultsCount.textContent = '0 個';
                 return;
             }
 
-            // Process facilities - Worker already converted HK80 to WGS84
-            const facilitiesProcessed = facilities.map(facility => {
-                // Use WGS84 coordinates from Worker response
-                const facLat = facility.wgsLat || 0;
-                const facLng = facility.wgsLng || 0;
-
-                // Calculate distance
-                const distance = getDistance(userLat, userLng, facLat, facLng);
-
-                return {
-                    ...facility,
-                    facLat,
-                    facLng,
-                    distance
-                };
-            });
-
-            // Sort by distance
-            facilitiesProcessed.sort((a, b) => a.distance - b.distance);
+            resultsCount.textContent = `${filtered.length} 個`;
 
             // Render each facility
-            facilitiesProcessed.forEach(facility => {
+            filtered.forEach(facility => {
                 const name = facility.name || '未知設施';
                 const address = facility.address || '';
                 const distance = facility.distance;
+                const category = CATEGORIES[facility.category] || CATEGORIES.other;
                 const mapsUrl = `https://www.google.com/maps?q=${facility.facLat},${facility.facLng}`;
 
                 // Get additional info
-                let additionalInfo = '';
+                let additionalInfoHtml = '';
                 if (facility.additionalInfoKey && facility.additionalInfoValue) {
-                    const infoItems = facility.additionalInfoKey.map((key, i) => {
+                    const infoRows = facility.additionalInfoKey.map((key, i) => {
                         const value = facility.additionalInfoValue[i] || '';
-                        return `${key}: ${value}`;
-                    }).join('<br>');
-                    additionalInfo = `<p class="additional-info">${infoItems}</p>`;
+                        // Clean up HTML tags
+                        const cleanValue = value.replace(/<br\/>/g, ' ').replace(/<[^>]*>/g, '');
+                        return `
+                            <div class="info-row">
+                                <span class="info-label">${escapeHtml(key)}:</span>
+                                <span class="info-value">${escapeHtml(cleanValue)}</span>
+                            </div>
+                        `;
+                    }).join('');
+
+                    additionalInfoHtml = `<div class="additional-info">${infoRows}</div>`;
                 }
 
                 const item = document.createElement('div');
                 item.className = 'result-item';
                 item.innerHTML = `
-                    <h3>${escapeHtml(name)}</h3>
-                    ${address ? `<p>${escapeHtml(address)}</p>` : ''}
-                    ${additionalInfo}
-                    <p class="distance">距離: ${distance.toFixed(0)} 米</p>
-                    <a href="${mapsUrl}" target="_blank" rel="noopener">📍 在地圖中查看</a>
+                    <div class="result-item-header">
+                        <div class="emoji-badge">${category.emoji}</div>
+                        <div class="info">
+                            <h3>${escapeHtml(name)}</h3>
+                            ${address ? `<div class="address">📍 ${escapeHtml(address)}</div>` : ''}
+                        </div>
+                        <div class="distance-badge">${distance.toFixed(0)}m</div>
+                    </div>
+                    ${additionalInfoHtml}
+                    <div class="actions">
+                        <a href="${mapsUrl}" target="_blank" rel="noopener" class="action-btn primary" style="text-decoration: none;">
+                            <span>🗺️</span> 在地圖中查看
+                        </a>
+                    </div>
                 `;
                 resultsList.appendChild(item);
             });
-
-            resultsCard.style.display = 'block';
-            showStatus(`搵到 ${facilities.length} 個設施`, 'success');
         }
 
         // ==================== Helper Functions ====================
@@ -502,6 +896,7 @@
         function showLoading(show) {
             loadingDiv.className = show ? 'loading show' : 'loading';
             searchBtn.disabled = show;
+            gpsBtn.disabled = show;
         }
     </script>
 </body>
