@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>附近設施 Finder</title>
+    <!-- proj4js for coordinate transformation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
     <style>
         * {
             margin: 0;
@@ -162,6 +164,15 @@
             text-decoration: underline;
         }
 
+        .result-item .additional-info {
+            background: #f0f4ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            font-size: 13px;
+            color: #555;
+        }
+
         .no-results {
             text-align: center;
             color: #999;
@@ -269,6 +280,12 @@
         // ==================== Configuration ====================
         const PROXY_BASE = 'https://nearby-finder-proxy.stonemok-business.workers.dev';
 
+        // ==================== proj4js Setup ====================
+        // HK80 Grid System (EPSG:2326)
+        proj4.defs('EPSG:2326', '+proj=tmerc +lat_0=22.31213333333334 +lon_0=114.1785555555556 +k=1 +x_0=836694.05 +y_0=819069.8 +ellps=GRS80 +towgs84=-1.0899999999999999,-405.9990000000001,586.999000000001,0,0,0,0 +units=m +no_defs');
+        // WGS84 (EPSG:4326)
+        proj4.defs('EPSG:4326', '+proj=longlat +datum=WGS84 +no_defs');
+
         // ==================== DOM Elements ====================
         const latInput = document.getElementById('lat');
         const lngInput = document.getElementById('lng');
@@ -363,19 +380,14 @@
             showStatus('', '');
 
             try {
-                // Step 1: Transform coordinates (WGS84 → HK80)
-                const transformUrl = `${PROXY_BASE}/transform?inSys=wgsgeog&outSys=hkgrid&lat=${lat}&long=${lng}`;
-                const transformResponse = await fetch(transformUrl);
+                // Step 1: Transform coordinates (WGS84 → HK80) using proj4js
+                const hk80Coords = proj4('EPSG:4326', 'EPSG:2326', [lng, lat]);
+                const hk80X = hk80Coords[0]; // Easting
+                const hk80Y = hk80Coords[1]; // Northing
+                console.log(`WGS84: ${lat}, ${lng} → HK80: ${hk80X}, ${hk80Y}`);
 
-                if (!transformResponse.ok) {
-                    throw new Error(`座標轉換失敗: ${transformResponse.status}`);
-                }
-
-                const transformData = await transformResponse.json();
-                console.log('Transform response:', transformData);
-
-                // Step 2: Search nearby facilities
-                const nearbyUrl = `${PROXY_BASE}/nearby?lat=${lat}&long=${lng}&r=1000`;
+                // Step 2: Search nearby facilities using HK80 coordinates
+                const nearbyUrl = `${PROXY_BASE}/nearby?x=${hk80X}&y=${hk80Y}&lang=zh`;
                 const nearbyResponse = await fetch(nearbyUrl);
 
                 if (!nearbyResponse.ok) {
@@ -401,7 +413,7 @@
         function renderResults(data, userLat, userLng) {
             resultsList.innerHTML = '';
 
-            // Defensive parsing - gov API field names vary
+            // Parse API response - it's an array of facilities
             let facilities = [];
 
             if (Array.isArray(data)) {
@@ -410,8 +422,6 @@
                 facilities = data.features;
             } else if (data && data.results) {
                 facilities = data.results;
-            } else if (data && data.data) {
-                facilities = data.data;
             }
 
             if (facilities.length === 0) {
@@ -420,28 +430,53 @@
                 return;
             }
 
-            // Sort by distance
-            facilities.sort((a, b) => {
-                const distA = getDistance(userLat, userLng, getLat(a), getLng(a));
-                const distB = getDistance(userLat, userLng, getLat(b), getLng(b));
-                return distA - distB;
-            });
+            // Convert HK80 coordinates to WGS84 for each facility
+            const facilitiesWithWGS84 = facilities.map(facility => {
+                const hk80X = parseFloat(facility.x);
+                const hk80Y = parseFloat(facility.y);
 
-            // Render each facility
-            facilities.forEach(facility => {
-                const name = getName(facility);
-                const address = getAddress(facility);
-                const facLat = getLat(facility);
-                const facLng = getLng(facility);
+                // Convert HK80 to WGS84
+                const wgs84Coords = proj4('EPSG:2326', 'EPSG:4326', [hk80X, hk80Y]);
+                const facLng = wgs84Coords[0]; // longitude
+                const facLat = wgs84Coords[1]; // latitude
+
+                // Calculate distance
                 const distance = getDistance(userLat, userLng, facLat, facLng);
 
-                const mapsUrl = `https://www.google.com/maps?q=${facLat},${facLng}`;
+                return {
+                    ...facility,
+                    facLat,
+                    facLng,
+                    distance
+                };
+            });
+
+            // Sort by distance
+            facilitiesWithWGS84.sort((a, b) => a.distance - b.distance);
+
+            // Render each facility
+            facilitiesWithWGS84.forEach(facility => {
+                const name = facility.name || '未知設施';
+                const address = facility.address || '';
+                const distance = facility.distance;
+                const mapsUrl = `https://www.google.com/maps?q=${facility.facLat},${facility.facLng}`;
+
+                // Get additional info
+                let additionalInfo = '';
+                if (facility.additionalInfoKey && facility.additionalInfoValue) {
+                    const infoItems = facility.additionalInfoKey.map((key, i) => {
+                        const value = facility.additionalInfoValue[i] || '';
+                        return `${key}: ${value}`;
+                    }).join('<br>');
+                    additionalInfo = `<p class="additional-info">${infoItems}</p>`;
+                }
 
                 const item = document.createElement('div');
                 item.className = 'result-item';
                 item.innerHTML = `
                     <h3>${escapeHtml(name)}</h3>
                     ${address ? `<p>${escapeHtml(address)}</p>` : ''}
+                    ${additionalInfo}
                     <p class="distance">距離: ${distance.toFixed(0)} 米</p>
                     <a href="${mapsUrl}" target="_blank" rel="noopener">📍 在地圖中查看</a>
                 `;
@@ -453,31 +488,6 @@
         }
 
         // ==================== Helper Functions ====================
-        // Defensive field extraction
-        function getName(obj) {
-            return obj.name || obj.Name || obj.NAME || obj.facility_name || obj.FacilityName || '未知設施';
-        }
-
-        function getAddress(obj) {
-            return obj.address || obj.Address || obj.ADDRESS || obj.location || obj.Location || '';
-        }
-
-        function getLat(obj) {
-            if (obj.lat) return parseFloat(obj.lat);
-            if (obj.latitude) return parseFloat(obj.latitude);
-            if (obj.y) return parseFloat(obj.y);
-            if (obj.geometry && obj.geometry.coordinates) return obj.geometry.coordinates[1];
-            return 0;
-        }
-
-        function getLng(obj) {
-            if (obj.lng) return parseFloat(obj.lng);
-            if (obj.long) return parseFloat(obj.long);
-            if (obj.longitude) return parseFloat(obj.longitude);
-            if (obj.x) return parseFloat(obj.x);
-            if (obj.geometry && obj.geometry.coordinates) return obj.geometry.coordinates[0];
-            return 0;
-        }
 
         // Haversine formula for distance calculation
         function getDistance(lat1, lng1, lat2, lng2) {
