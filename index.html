@@ -48,6 +48,7 @@
         .header {
             text-align: center;
             margin-bottom: 24px;
+            position: relative;
         }
 
         .header h1 {
@@ -61,6 +62,19 @@
         .header p {
             color: rgba(255, 255, 255, 0.7);
             font-size: 14px;
+        }
+
+        .version {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
 
         /* Cards */
@@ -518,6 +532,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
+            <div class="version">V2607210745</div>
             <h1>🏙️ 附近設施 Finder</h1>
             <p>搵你附近嘅政府設施、停車場、商場</p>
         </div>
