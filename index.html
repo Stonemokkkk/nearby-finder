@@ -532,7 +532,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <div class="version">V2607210745</div>
+            <div class="version">V2607210042</div>
             <h1>🏙️ 附近設施 Finder</h1>
             <p>搵你附近嘅政府設施、停車場、商場</p>
         </div>
@@ -814,6 +814,9 @@
         // ==================== Render Results ====================
         function renderResults() {
             resultsList.innerHTML = '';
+
+            // Show results card
+            resultsCard.style.display = 'block';
 
             // Filter by category
             const filtered = activeCategory === 'all'
